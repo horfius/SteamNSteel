@@ -22,11 +22,12 @@ public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity {
     private WorldBlockCoord masterLocation;
     private long buildStartTime;
     private long lastSpawnTime;
+    public final int timeBetweenSpawns = 600, buildTime = 600; //For use with animating the door and whatever
 
     public SpiderFactoryEntity(World p_i1738_1_) {
         super(p_i1738_1_);
         setSize(1.36F, 1.32F);
-        tasks.addTask(0, new AIFactorySpawnEntity<>(this, 600, 600));
+        tasks.addTask(0, new AIFactorySpawnEntity<>(this, timeBetweenSpawns, buildTime));
     }
 
     private static final int INDEX_LAST_SPAWN_TIME_MSB = 12;
@@ -128,8 +129,7 @@ public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity {
 
     @Override
     public void startBuildCycle() {
-        updateBuildStartTime(worldObj.getWorldTime());
-
+        updateBuildStartTime(worldObj.getTotalWorldTime());
     }
 
     private void updateBuildStartTime(long newTime) {
@@ -152,7 +152,7 @@ public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity {
     @Override
     public void finishBuildCycle() {
         updateBuildStartTime(-1);
-        updateLastSpawnTime(worldObj.getWorldTime());
+        updateLastSpawnTime(worldObj.getTotalWorldTime());
     }
 
     @Override
@@ -160,6 +160,9 @@ public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity {
         String entityName = (String) EntityList.classToStringMapping.get(SteamSpiderEntity.class);
         Entity entity = EntityList.createEntityByName(entityName, worldObj);
         entity.setPositionAndRotation(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
+        entity.motionX = (this.rotationYaw % 180) / 90 * (-2 + this.rotationYaw / 90);//90, 270
+        //No clue if yaw could end up at 360, extra moduli potentially unnecessary
+        entity.motionZ = Math.abs((this.rotationYaw % 360 - 90) % 180) / 90 * ((this.rotationYaw % 360 - 90) / 90); //0, 180, maybe 360
 
         worldObj.spawnEntityInWorld(entity);
     }
@@ -171,7 +174,6 @@ public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity {
         if (!worldObj.isRemote) {
             masterLocation.setBlock(worldObj, Blocks.air, 0, 3);
             boolean flag = worldObj.getGameRules().getGameRuleBooleanValue("mobGriefing");
-            flag = false;
             worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 2.0f, flag);
         }
 
