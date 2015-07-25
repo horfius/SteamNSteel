@@ -28,7 +28,7 @@ public class SteamSpiderEntity extends EntityMob implements ISwarmer, IRangedAtt
         tasks.addTask(1, new AISwarmReturnHome<SteamSpiderEntity>(this, 256, 1.2F, true));
         tasks.addTask(2, new EntityAIAttackOnCollide(this, EntityPlayer.class, 1.0D, false));
         tasks.addTask(2, new AIRangeBurstAttack<SteamSpiderEntity>(this, 1.2D, 4F, 40, 1200));
-        tasks.addTask(4, new AISwarmWander<SteamSpiderEntity>(this, 60, 1.0F));
+        tasks.addTask(4, new AISwarmWander<SteamSpiderEntity>(this, 10, 1.0F));
         //tasks.addTask(8, new EntityAIWatchClosest(this, EntityPlayer.class, 8.0F));
         //tasks.addTask(8, new EntityAILookIdle(this));
         tasks.addTask(8, new AISwarmSeek<SteamSpiderEntity>(this, 0, 50, 100, 3, 1200, false)); //This should be removed if we want spiders to become "dumb" when their host is killed

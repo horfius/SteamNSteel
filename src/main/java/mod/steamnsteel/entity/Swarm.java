@@ -4,8 +4,10 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
 import mod.steamnsteel.utility.gson.Exclude;
+import mod.steamnsteel.utility.log.Logger;
 import mod.steamnsteel.utility.position.ChunkBlockCoord;
 import mod.steamnsteel.utility.position.ChunkCoord;
+import mod.steamnsteel.utility.position.WorldBlockCoord;
 import net.minecraft.command.IEntitySelector;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
@@ -16,6 +18,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
+import org.apache.logging.log4j.Level;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -44,14 +48,17 @@ public class Swarm<T extends EntityLiving & ISwarmer>
         this.homeChunkCoord = homeChunkCoord;
         this.homeBlockCoord = homeBlockCoord;
         this.currPosition = homeChunkCoord;
+        update(0);
     }
 
     public void update(int tickCounter)
     {
+        WorldBlockCoord worldCoord = homeChunkCoord.localToWorldCoords(homeBlockCoord);
+
         @SuppressWarnings("unchecked")
         List<EntityPlayer> playerList = world.getEntitiesWithinAABB(EntityPlayer.class, AxisAlignedBB.getBoundingBox(
-                homeChunkCoord.getX(), homeBlockCoord.getY() - 16, homeChunkCoord.getZ(), homeChunkCoord.getX() + 16,
-                homeBlockCoord.getY() + 16, homeChunkCoord.getZ() + 16));
+                worldCoord.getX() - 16, worldCoord.getY() - 16, worldCoord.getZ() - 16, worldCoord.getX() + 16,
+                worldCoord.getY() + 16, worldCoord.getZ() + 16));
 
         if (playerList != null && playerList.size() > 0)
         {
@@ -59,7 +66,9 @@ public class Swarm<T extends EntityLiving & ISwarmer>
             //Increase threat count for players in home radius
             for (EntityPlayer player : playerList) {
                 playersToAdd.add(player.getCommandSenderName());
-                changeThreatCount(player.getCommandSenderName(), 1);
+                if(!threatCount.contains(player.getCommandSenderName())) {
+                    changeThreatCount(player.getCommandSenderName(), 1);
+                }
             }
             //Decrease threat count for players no longer in home area
             for (String playerName : threatCount.elementSet()) {

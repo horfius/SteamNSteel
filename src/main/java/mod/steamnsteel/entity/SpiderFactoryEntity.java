@@ -1,9 +1,12 @@
 package mod.steamnsteel.entity;
 
 import mod.steamnsteel.entity.ai.AIFactorySpawnEntity;
+import mod.steamnsteel.entity.ai.AISwarmOnHurt;
 import mod.steamnsteel.factory.IFactoryEntity;
 import mod.steamnsteel.utility.NBTHelper;
 import mod.steamnsteel.utility.log.Logger;
+import mod.steamnsteel.utility.position.ChunkBlockCoord;
+import mod.steamnsteel.utility.position.ChunkCoord;
 import mod.steamnsteel.utility.position.WorldBlockCoord;
 import net.minecraft.entity.DataWatcher;
 import net.minecraft.entity.Entity;
@@ -15,7 +18,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
 
-public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity {
+public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity, ISwarmer {
 
     public static final String NAME = "spiderFactory";
     private Swarm swarm;
@@ -24,10 +27,12 @@ public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity {
     private long lastSpawnTime;
     public final int timeBetweenSpawns = 600, buildTime = 600; //For use with animating the door and whatever
 
-    public SpiderFactoryEntity(World p_i1738_1_) {
-        super(p_i1738_1_);
+    public SpiderFactoryEntity(World world) {
+        super(world);
         setSize(1.36F, 1.32F);
+
         tasks.addTask(0, new AIFactorySpawnEntity<>(this, timeBetweenSpawns, buildTime));
+        tasks.addTask(1, new AISwarmOnHurt<>(this));
     }
 
     private static final int INDEX_LAST_SPAWN_TIME_MSB = 12;
@@ -70,6 +75,18 @@ public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity {
     public void onUpdate() {
 
         super.onUpdate();
+
+        if(swarm == null && masterLocation != null){
+            swarm = new Swarm(worldObj, ChunkCoord.of(masterLocation), ChunkBlockCoord.of(masterLocation), this.getClass());
+
+            SwarmManager manager = SwarmManager.swarmManagers.get(worldObj);
+            if(manager == null){
+                manager = new SwarmManager(worldObj);
+                SwarmManager.swarmManagers.put(worldObj, manager);
+            }
+            manager.addSwarm(swarm);
+        }
+
         this.posX = this.prevPosX;
         this.posZ = this.prevPosZ;
         this.posY = this.prevPosY;
@@ -163,6 +180,9 @@ public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity {
         entity.motionX = (this.rotationYaw % 180) / 90 * (-2 + this.rotationYaw / 90);//90, 270
         //No clue if yaw could end up at 360, extra moduli potentially unnecessary
         entity.motionZ = Math.abs((this.rotationYaw % 360 - 90) % 180) / 90 * ((this.rotationYaw % 360 - 90) / 90); //0, 180, maybe 360
+        if(entity instanceof ISwarmer){
+            ((ISwarmer)entity).setSwarm(this.getSwarm());
+        }
 
         worldObj.spawnEntityInWorld(entity);
     }
@@ -176,7 +196,22 @@ public class SpiderFactoryEntity extends EntityMob implements IFactoryEntity {
             boolean flag = worldObj.getGameRules().getGameRuleBooleanValue("mobGriefing");
             worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 2.0f, flag);
         }
+        swarm = null;
 
         worldObj.removeEntity(this);
+    }
+
+    @Override
+    public Swarm getSwarm() {
+        return swarm;
+    }
+
+    @Override
+    public void setSwarm(Swarm swarm) {
+        if(this.swarm != null){
+            swarm.removeEntity(this);
+        }
+
+        this.swarm = swarm;
     }
 }

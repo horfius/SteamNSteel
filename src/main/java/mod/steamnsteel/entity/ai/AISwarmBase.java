@@ -40,8 +40,7 @@ abstract class AISwarmBase<T extends EntityLiving & ISwarmer> extends EntityAIBa
         @Override
         public boolean isEntityApplicable(Entity entity)
         {
-            EntityPlayer player = (EntityPlayer) entity;
-            return !player.capabilities.isCreativeMode;
+            return entity instanceof EntityPlayer && !((EntityPlayer)entity).capabilities.isCreativeMode;
         }
     }
 }
