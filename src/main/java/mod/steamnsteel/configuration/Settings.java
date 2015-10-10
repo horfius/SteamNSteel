@@ -28,6 +28,7 @@ public enum Settings
     public static void syncConfig(Configuration config)
     {
         World.syncConfig(config);
+        Voxbox.syncConfig(config);
     }
 
     @SuppressWarnings("StaticNonFinalField")
@@ -68,6 +69,22 @@ public enum Settings
             isZincGenerated = get(config, "genZinc", CATEGORY, isZincGenerated);
 
             doRetroOreGen = get(config, "retroOreGen", CATEGORY, doRetroOreGen);
+        }
+    }
+
+    public enum Voxbox{
+        INSTANCE;
+
+        public static final String CATEGORY = Configuration.CATEGORY_GENERAL + ".voxbox";
+
+        private static boolean isVoxboxMuted = false;
+
+        public static boolean isVoxboxMuted(){
+            return isVoxboxMuted;
+        }
+
+        private static void syncConfig(Configuration config){
+            isVoxboxMuted = get(config, "voxboxMuted", CATEGORY, isVoxboxMuted);
         }
     }
 

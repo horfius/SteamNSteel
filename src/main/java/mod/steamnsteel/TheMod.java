@@ -21,21 +21,27 @@ import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.*;
 import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import mod.steamnsteel.api.crafting.CraftingManager;
 import mod.steamnsteel.api.crafting.IAlloyManager;
+import mod.steamnsteel.api.voxbox.IVoxBoxEntryManager;
+import mod.steamnsteel.api.voxbox.VoxboxEntryManager;
 import mod.steamnsteel.configuration.ConfigurationHandler;
 import mod.steamnsteel.crafting.Recipes;
 import mod.steamnsteel.crafting.alloy.AlloyManager;
+import mod.steamnsteel.event.VoxboxButtonListener;
 import mod.steamnsteel.gui.GuiHandler;
 import mod.steamnsteel.library.ModBlock;
 import mod.steamnsteel.library.ModBlockParts;
 import mod.steamnsteel.library.ModItem;
 import mod.steamnsteel.proxy.Proxies;
+import mod.steamnsteel.utility.voxbox.VoxboxManager;
 import mod.steamnsteel.world.LoadSchematicFromFileCommand;
 import mod.steamnsteel.world.LoadSchematicFromResourceCommand;
 import mod.steamnsteel.world.WorldGen;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
+import net.minecraftforge.common.MinecraftForge;
 
 @SuppressWarnings({"WeakerAccess", "MethodMayBeStatic"})
 @Mod(modid = TheMod.MOD_ID, name = TheMod.MOD_NAME, version = TheMod.MOD_VERSION, useMetadata = true, guiFactory = TheMod.MOD_GUI_FACTORY)
@@ -47,6 +53,8 @@ public class TheMod
     public static final String MOD_GUI_FACTORY = "mod.steamnsteel.configuration.client.ModGuiFactory";
 
     public static final String RESOURCE_PREFIX = MOD_ID.toLowerCase() + ':';
+
+    public static SimpleNetworkWrapper packetChannel = null;
 
     @SuppressWarnings("AnonymousInnerClass")
     public static final CreativeTabs CREATIVE_TAB = new CreativeTabs(MOD_ID.toLowerCase())
@@ -66,18 +74,21 @@ public class TheMod
     public void onFMLPreInitialization(FMLPreInitializationEvent event)
     {
         ConfigurationHandler.init(event.getSuggestedConfigurationFile());
+        packetChannel = NetworkRegistry.INSTANCE.newSimpleChannel(TheMod.MOD_ID.toLowerCase());
 
         initAPI();
 
         ModItem.init();
         ModBlock.init();
         ModBlockParts.init();
+        VoxboxManager.init();
     }
 
     @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
     private void initAPI()
     {
         CraftingManager.alloyManager = Optional.of((IAlloyManager) AlloyManager.INSTANCE);
+        VoxboxEntryManager.instance = Optional.of((IVoxBoxEntryManager) VoxboxManager.INSTANCE);
     }
 
     @SuppressWarnings("UnusedParameters")
